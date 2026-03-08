@@ -1,8 +1,17 @@
 <template>
   <div>
-    <div class="page-header">
-      <h2>仪表盘</h2>
-      <p>监控仓库变更总览</p>
+    <!-- 首屏：胶囊 + 大标题 + 副标题 -->
+    <div class="dashboard-hero">
+      <div class="hero-capsule">
+        <el-icon><Star /></el-icon>
+        基于轮询的 GitHub / Gitee 仓库变更监控
+      </div>
+      <h1 class="hero-title">
+        <span class="gradient">仓库监控</span>
+        <span class="hero-title-dot">·</span>
+        <span class="gradient">Repo Watcher</span>
+      </h1>
+      <p class="hero-subtitle">有更新，第一时间知道</p>
     </div>
 
     <!-- 统计卡片 -->
@@ -127,6 +136,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { Star } from '@element-plus/icons-vue'
 import { getRepos, triggerCheck } from '../api/repos'
 import { ElMessage } from 'element-plus'
 
