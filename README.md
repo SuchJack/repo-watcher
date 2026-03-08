@@ -160,7 +160,6 @@ npm run dev
 │   └── Dockerfile
 ├── data/                     # Docker 挂载目录（持久化）
 ├── docker-compose.yml
-├── 仓库变更监控工具-概要设计.md
 └── README.md
 ```
 

@@ -164,7 +164,6 @@ Frontend dev server runs at <http://localhost:3001>; Vite proxies `/api` to `htt
 │   └── Dockerfile
 ├── data/                     # Docker volume (persistence)
 ├── docker-compose.yml
-├── 仓库变更监控工具-概要设计.md   # Design doc (Chinese)
 ├── README.md
 └── README_EN.md
 ```
