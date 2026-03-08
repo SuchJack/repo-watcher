@@ -59,6 +59,10 @@
           <el-icon><Check /></el-icon>
           <span>标记全部已读</span>
         </el-button>
+        <el-button plain @click="handleReloadPage">
+          <el-icon><RefreshRight /></el-icon>
+          <span>刷新页面</span>
+        </el-button>
         <el-button type="primary" :loading="checking" @click="handleCheck">
           <el-icon><Refresh /></el-icon>
           <span>立即检查</span>
@@ -76,9 +80,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="仓库" min-width="200">
+        <el-table-column label="仓库" min-width="240">
           <template #default="{ row }">
-            <span style="font-weight:600">{{ row.owner }}/{{ row.repo }}</span>
+            <el-tooltip :content="`${row.owner}/${row.repo}`" placement="top">
+              <span class="repo-name-cell">{{ row.owner }}/{{ row.repo }}</span>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column label="分支" width="120">
@@ -89,15 +95,20 @@
         <el-table-column label="最新提交" min-width="260">
           <template #default="{ row }">
             <template v-if="row.state?.last_sha">
-              <a
-                :href="row.state.last_url"
-                target="_blank"
-                class="mono"
-                style="color:var(--accent); text-decoration:none"
-              >{{ row.state.last_sha?.slice(0, 8) }}</a>
-              <span style="margin-left:8px; color:var(--text-secondary); font-size:12px">
-                {{ row.state.last_message }}
-              </span>
+              <el-tooltip
+                :content="`${row.state.last_sha?.slice(0, 8)} ${row.state.last_message || ''}`"
+                placement="top"
+              >
+                <span class="commit-cell">
+                  <a
+                    :href="row.state.last_url"
+                    target="_blank"
+                    class="mono commit-sha"
+                    @click.stop
+                  >{{ row.state.last_sha?.slice(0, 8) }}</a>
+                  <span class="commit-msg">{{ row.state.last_message }}</span>
+                </span>
+              </el-tooltip>
             </template>
             <span v-else style="color:var(--text-muted)">暂无数据</span>
           </template>
@@ -125,7 +136,7 @@
             <el-tag v-else type="info" size="small">待检查</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="110" align="center" fixed="right">
+        <el-table-column label="操作" width="110" align="center">
           <template #default="{ row }">
             <el-button
               class="btn-mark-read"
@@ -167,7 +178,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Star, FolderOpened, CircleCheck, Timer, Refresh, Check } from '@element-plus/icons-vue'
+import { Star, FolderOpened, CircleCheck, Timer, Refresh, RefreshRight, Check } from '@element-plus/icons-vue'
 import { getRepos, triggerCheck, clearRepoUpdates, clearAllUpdates } from '../api/repos'
 import { ElMessage } from 'element-plus'
 
@@ -249,5 +260,35 @@ async function handleClearAll() {
   }
 }
 
+function handleReloadPage() {
+  location.reload()
+}
+
 onMounted(loadRepos)
 </script>
+
+<style scoped>
+.repo-name-cell {
+  display: block;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.commit-cell {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.commit-cell .commit-sha {
+  color: var(--accent);
+  text-decoration: none;
+}
+.commit-cell .commit-msg {
+  margin-left: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+</style>
