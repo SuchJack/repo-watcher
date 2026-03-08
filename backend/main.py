@@ -12,7 +12,7 @@ from pathlib import Path
 from backend.config import (
     load_config, save_config, mask_config,
     load_repos, add_repo, update_repo, delete_repo,
-    load_state,
+    load_state, save_state, get_state_key,
 )
 from backend.checker.state import get_repo_state
 from backend.scheduler import start_scheduler, reschedule, shutdown_scheduler, run_check_all
@@ -89,6 +89,25 @@ async def remove_repo(repo_id: str):
     return {"ok": True}
 
 
+@app.post("/api/repos/{repo_id}/clear-updates")
+async def clear_repo_updates(repo_id: str):
+    """清空指定仓库的更新次数（update_count=0, updated=False）。"""
+    repos = load_repos()
+    repo = next((r for r in repos if r.get("id") == repo_id), None)
+    if not repo:
+        raise HTTPException(404, "仓库不存在")
+    platform = repo.get("platform", "github")
+    owner = repo.get("owner", "")
+    repo_name = repo.get("repo", "")
+    branch = repo.get("branch", "master")
+    key = get_state_key(platform, owner, repo_name, branch)
+    state = load_state()
+    if key in state:
+        state[key] = {**state[key], "update_count": 0, "updated": False}
+        save_state(state)
+    return {"ok": True, "state": state.get(key, {})}
+
+
 # ── Config API ───────────────────────────────────────────
 
 @app.get("/api/config")
@@ -128,6 +147,24 @@ async def trigger_check():
 @app.get("/api/state")
 async def get_state():
     return load_state()
+
+
+@app.post("/api/state/clear-all-updates")
+async def clear_all_updates():
+    """清空所有仓库的更新次数。"""
+    repos = load_repos()
+    state = load_state()
+    for r in repos:
+        key = get_state_key(
+            r.get("platform", "github"),
+            r.get("owner", ""),
+            r.get("repo", ""),
+            r.get("branch", "master"),
+        )
+        if key in state:
+            state[key] = {**state[key], "update_count": 0, "updated": False}
+    save_state(state)
+    return {"ok": True, "cleared": len(repos)}
 
 
 # ── 静态文件（生产环境托管前端构建产物）───────────────────

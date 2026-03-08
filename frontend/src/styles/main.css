@@ -394,6 +394,43 @@ body {
   margin-bottom: 20px;
 }
 
+.actions-bar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 标记全部已读：次要操作，绿色已读语义 */
+.btn-mark-all-read {
+  --el-button-text-color: var(--success);
+  --el-button-border-color: var(--success);
+  --el-button-bg-color: transparent;
+  --el-button-hover-text-color: #fff;
+  --el-button-hover-bg-color: var(--success);
+  --el-button-hover-border-color: var(--success);
+}
+.btn-mark-all-read .el-icon {
+  margin-right: 6px;
+  vertical-align: -0.15em;
+}
+
+/* 表格内标为已读：链接样式 + 绿色 */
+.btn-mark-read {
+  color: var(--success) !important;
+  font-size: 12px;
+}
+.btn-mark-read:hover:not(.is-disabled) {
+  color: #15803d !important;
+}
+.btn-mark-read .el-icon {
+  margin-right: 4px;
+  vertical-align: -0.12em;
+  font-size: 14px;
+}
+.btn-mark-read.is-disabled {
+  color: var(--text-muted) !important;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.25s ease;

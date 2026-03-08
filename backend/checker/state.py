@@ -26,6 +26,7 @@ def check_and_update(
         save_state(state)
         return False
 
+    new_count = (old.get("update_count") or 0) + 1
     state[key] = {
         "last_sha": new_sha,
         "last_time": latest_commit.get("time", ""),
@@ -34,6 +35,7 @@ def check_and_update(
         "last_url": latest_commit.get("url", ""),
         "last_check_time": datetime.now(timezone.utc).isoformat(),
         "updated": True,
+        "update_count": new_count,
     }
     save_state(state)
     return True
