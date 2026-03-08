@@ -57,7 +57,7 @@ async def get_repos():
             r.get("platform", "github"),
             r.get("owner", ""),
             r.get("repo", ""),
-            r.get("branch", "main"),
+            r.get("branch", "master"),
         )
         result.append({**r, "state": state})
     return result

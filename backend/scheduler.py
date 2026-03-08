@@ -24,7 +24,7 @@ def _build_message(repo_info: dict, commit: dict) -> tuple[str, str]:
     platform = repo_info["platform"]
     owner = repo_info["owner"]
     repo = repo_info["repo"]
-    branch = repo_info.get("branch", "main")
+    branch = repo_info.get("branch", "master")
     title = f"[仓库更新] {owner}/{repo} ({branch})"
     text = (
         f"平台: {platform}\n"
@@ -70,7 +70,7 @@ async def run_check_all() -> list[dict]:
         platform = repo_info.get("platform", "github")
         owner = repo_info.get("owner", "")
         repo = repo_info.get("repo", "")
-        branch = repo_info.get("branch", "main")
+        branch = repo_info.get("branch", "master")
 
         if not owner or not repo:
             continue

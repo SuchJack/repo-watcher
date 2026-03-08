@@ -102,7 +102,7 @@ def add_repo(repo: dict) -> dict:
     repos = load_repos()
     repo["id"] = str(uuid.uuid4())[:8]
     if not repo.get("branch"):
-        repo["branch"] = "main"
+        repo["branch"] = "master"
     repos.append(repo)
     save_repos(repos)
     return repo
