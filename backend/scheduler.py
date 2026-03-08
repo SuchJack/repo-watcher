@@ -4,6 +4,7 @@
 
 import asyncio
 import logging
+from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from backend.config import load_config, load_repos
@@ -20,12 +21,24 @@ JOB_ID = "poll_repos"
 scheduler = BackgroundScheduler()
 
 
+def _format_commit_time(iso_time: str) -> str:
+    """将 ISO 时间（如 2026-03-08T22:24:41+08:00）格式化为 2026-03-08 22:24:41"""
+    if not iso_time:
+        return iso_time
+    try:
+        dt = datetime.fromisoformat(iso_time.replace("Z", "+00:00"))
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    except (ValueError, TypeError):
+        return iso_time
+
+
 def _build_message(repo_info: dict, commit: dict) -> tuple[str, str]:
     platform = repo_info["platform"]
     owner = repo_info["owner"]
     repo = repo_info["repo"]
     branch = repo_info.get("branch", "master")
     title = f"[仓库更新] {owner}/{repo} ({branch})"
+    time_str = _format_commit_time(commit.get("time", ""))
     text = (
         f"平台: {platform}\n"
         f"仓库: {owner}/{repo}\n"
@@ -33,7 +46,7 @@ def _build_message(repo_info: dict, commit: dict) -> tuple[str, str]:
         f"提交: {commit['sha'][:8]}\n"
         f"作者: {commit['author']}\n"
         f"信息: {commit['message']}\n"
-        f"时间: {commit['time']}\n"
+        f"时间: {time_str}\n"
         f"链接: {commit['url']}"
     )
     return title, text
