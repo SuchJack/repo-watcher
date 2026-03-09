@@ -30,6 +30,7 @@
 
 | 功能 | 说明 |
 |------|------|
+| **后台登录** | 需登录后才能进入后台；默认账号 **admin** / 密码 **admin**，首次登录后请在「系统设置 → 修改密码」中修改 |
 | **仓库监控** | 支持 GitHub、Gitee；可配置 owner/repo/分支，列表增删改 |
 | **轮询间隔** | 可设置 60～86400 秒，保存后立即生效 |
 | **仪表盘** | 展示各仓库最新 commit、最后检查时间、是否有更新、累计更新次数 |
@@ -53,6 +54,7 @@
 - **框架**：FastAPI
 - **运行**：Uvicorn
 - **定时**：APScheduler
+- **认证**：JWT + bcrypt（单用户 admin，密码可配置或使用默认）
 - **存储**：JSON 文件（config / repos / state），无需数据库
 
 ---
@@ -80,6 +82,8 @@ docker compose up -d
 
 - **前端**：<http://localhost:3000>
 - **后端 API**：<http://localhost:8000>（可选，调试用）
+
+首次访问会进入登录页。未配置管理员密码时，使用用户名 **admin**、密码 **admin** 登录；**建议登录后立即在「系统设置 → 修改密码」中修改密码**。若需自定义初始密码，可设置环境变量 `ADMIN_PASSWORD` 或往 `backend/data/config.json` 写入 `admin_password` 的 bcrypt 哈希。
 
 4. **查看日志**
 
@@ -118,13 +122,14 @@ docker compose up -d
 
 #### 后端
 
+在项目**根目录**下执行：
+
 ```bash
-cd backend
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-需在项目**根目录**执行上述命令（或设置 `PYTHONPATH` 包含根目录），以便 `backend` 包可被正确导入。
+（若已进入 `backend` 目录，请先执行 `cd ..` 回到根目录。）
 
 #### 前端
 
@@ -134,7 +139,7 @@ npm install
 npm run dev
 ```
 
-前端开发服务器默认运行在 <http://localhost:3000>，Vite 已将 `/api` 代理到 `http://127.0.0.1:8000`。
+前端开发服务器默认运行在 <http://localhost:3000>，Vite 已将 `/api` 代理到 `http://127.0.0.1:8000`。首次访问会进入登录页，默认账号 **admin** / 密码 **admin**，登录后可在「系统设置 → 修改密码」中修改。
 
 ---
 
@@ -144,6 +149,7 @@ npm run dev
 ├── backend/                 # Python 后端
 │   ├── main.py               # FastAPI 入口、路由、静态托管
 │   ├── config.py             # 配置与存储（config/repos/state）
+│   ├── auth.py               # 登录认证（JWT、默认密码、修改密码）
 │   ├── scheduler.py          # 定时轮询调度
 │   ├── checker/              # 仓库检查（GitHub/Gitee）
 │   ├── notifier/             # 通知（飞书、邮件）
@@ -152,7 +158,7 @@ npm run dev
 │   └── Dockerfile
 ├── frontend/                 # Vue 前端
 │   ├── src/
-│   │   ├── views/            # 仪表盘、仓库管理、设置
+│   │   ├── views/            # 仪表盘、仓库管理、设置、登录
 │   │   ├── api/              # 请求封装
 │   │   └── router/
 │   ├── nginx.conf            # 生产环境 Nginx（/api 反向代理）
@@ -167,21 +173,23 @@ npm run dev
 
 ## 🔧 常见问题
 
-1. **Docker 启动后前端无法访问后端 / 接口 404**  
+1. **默认登录账号与密码**  
+   未配置管理员密码时，使用 **admin** / **admin**。首次登录后请在「系统设置 → 修改密码」中修改。自定义密码可设置环境变量 `ADMIN_PASSWORD` 或配置 `backend/data/config.json` 中的 `admin_password`（bcrypt 哈希）。
+
+2. **Docker 启动后前端无法访问后端 / 接口 404**  
    确认 `docker-compose` 中 frontend 与 backend 在同一网络；Nginx 中 `proxy_pass http://backend:8000` 的服务名与 compose 中 backend 服务名一致。
 
-2. **轮询间隔改了不生效**  
+3. **轮询间隔改了不生效**  
    保存配置后调度器会 reschedule；若仍不生效，可重启后端容器或再次保存一次配置。
 
-3. **飞书/邮件收不到通知**  
+4. **飞书/邮件收不到通知**  
    检查「通知设置」中对应渠道已启用且 URL/ SMTP 配置正确；可先点「立即检查」触发一次，再查看后端日志是否有发送错误。
 
-4. **端口 3000 或 8000 被占用**  
+5. **端口 3000 或 8000 被占用**  
    修改 `docker-compose.yml` 中 `ports`，例如将 `"3000:80"` 改为 `"3080:80"`，访问时使用新端口即可。
 
 ---
 
 ## 📄 许可证与参考
 
-- 详细设计与 API 说明见 **仓库变更监控工具-概要设计.md**。
 - 若本项目对你有帮助，欢迎 Star。
