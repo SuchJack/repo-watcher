@@ -260,7 +260,11 @@ async function handleSave() {
 }
 
 async function handleChangePassword() {
-  await passwordFormRef.value?.validate().catch(() => {})
+  try {
+    await passwordFormRef.value?.validate()
+  } catch {
+    return
+  }
   changingPassword.value = true
   try {
     await updatePassword({
