@@ -17,7 +17,7 @@ STATE_FILE = DATA_DIR / "state.json"
 
 _lock = threading.Lock()
 
-SENSITIVE_FIELDS = {"smtp_password", "feishu_secret", "github_token", "gitee_token"}
+SENSITIVE_FIELDS = {"smtp_password", "feishu_secret", "github_token", "gitee_token", "admin_password"}
 MASK = "******"
 
 DEFAULT_CONFIG = {
@@ -36,6 +36,7 @@ DEFAULT_CONFIG = {
     "smtp_use_tls": True,
     "from_addr": "",
     "to_addrs": [],
+    "admin_password": "",
 }
 
 

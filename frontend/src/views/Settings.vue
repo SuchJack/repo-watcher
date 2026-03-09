@@ -123,17 +123,94 @@
           </div>
         </div>
       </el-tab-pane>
+
+      <!-- ── 修改密码 ── -->
+      <el-tab-pane label="修改密码" name="password">
+        <div style="max-width:400px; padding:12px 0">
+          <el-form
+            ref="passwordFormRef"
+            :model="passwordForm"
+            :rules="passwordRules"
+            label-width="100px"
+            label-position="left"
+          >
+            <el-form-item label="当前密码" prop="old_password">
+              <el-input
+                v-model="passwordForm.old_password"
+                type="password"
+                placeholder="请输入当前密码"
+                show-password
+                clearable
+              />
+            </el-form-item>
+            <el-form-item label="新密码" prop="new_password">
+              <el-input
+                v-model="passwordForm.new_password"
+                type="password"
+                placeholder="至少 6 位"
+                show-password
+                clearable
+              />
+            </el-form-item>
+            <el-form-item label="确认新密码" prop="confirm_password">
+              <el-input
+                v-model="passwordForm.confirm_password"
+                type="password"
+                placeholder="再次输入新密码"
+                show-password
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :loading="changingPassword" @click="handleChangePassword">
+                修改密码
+              </el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+      </el-tab-pane>
     </el-tabs>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { getConfig, updateConfig } from '../api/config'
+import { updatePassword, logout } from '../api/auth'
 import { ElMessage } from 'element-plus'
 
+const router = useRouter()
 const activeTab = ref('polling')
 const saving = ref(false)
+const passwordFormRef = ref(null)
+const changingPassword = ref(false)
+
+const passwordForm = ref({
+  old_password: '',
+  new_password: '',
+  confirm_password: '',
+})
+
+const validateConfirm = (rule, value, callback) => {
+  if (value !== passwordForm.value.new_password) {
+    callback(new Error('两次输入的新密码不一致'))
+  } else {
+    callback()
+  }
+}
+
+const passwordRules = {
+  old_password: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  new_password: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '新密码至少 6 位', trigger: 'blur' },
+  ],
+  confirm_password: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { validator: validateConfirm, trigger: 'blur' },
+  ],
+}
 
 const config = ref({
   poll_interval_seconds: 600,
@@ -179,6 +256,24 @@ async function handleSave() {
     ElMessage.error('保存失败: ' + e.message)
   } finally {
     saving.value = false
+  }
+}
+
+async function handleChangePassword() {
+  await passwordFormRef.value?.validate().catch(() => {})
+  changingPassword.value = true
+  try {
+    await updatePassword({
+      old_password: passwordForm.value.old_password,
+      new_password: passwordForm.value.new_password,
+    })
+    ElMessage.success('密码已修改，请重新登录')
+    logout()
+    router.replace('/login')
+  } catch (e) {
+    ElMessage.error(e?.message || '修改失败')
+  } finally {
+    changingPassword.value = false
   }
 }
 

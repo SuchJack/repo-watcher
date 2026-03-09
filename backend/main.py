@@ -4,7 +4,9 @@ FastAPI 主入口：REST API 路由 + 静态文件托管 + 生命周期管理。
 
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from typing import Annotated
+
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
@@ -16,6 +18,7 @@ from backend.config import (
 )
 from backend.checker.state import get_repo_state
 from backend.scheduler import start_scheduler, reschedule, shutdown_scheduler, run_check_all
+from backend.auth import verify_password, create_access_token, get_current_user, change_password
 
 logging.basicConfig(
     level=logging.INFO,
@@ -46,10 +49,42 @@ app.add_middleware(
 )
 
 
+# ── Auth API（无需登录）────────────────────────────────────
+
+@app.post("/api/auth/login")
+async def login(body: dict):
+    """登录：校验用户名密码，成功返回 JWT。"""
+    username = (body.get("username") or "").strip()
+    password = (body.get("password") or "").strip()
+    if not username or not password:
+        raise HTTPException(400, "用户名和密码不能为空")
+    if not verify_password(username, password):
+        raise HTTPException(401, "用户名或密码错误")
+    token = create_access_token()
+    return {"ok": True, "token": token}
+
+
+@app.get("/api/auth/me")
+async def auth_me(user: Annotated[dict, Depends(get_current_user)]):
+    """校验当前 token 是否有效，返回当前用户信息。"""
+    return {"username": user["username"]}
+
+
+@app.put("/api/auth/password")
+async def update_password(body: dict, _user: Annotated[dict, Depends(get_current_user)]):
+    """修改登录密码：需提供当前密码与新密码，成功后请重新登录。"""
+    old_password = (body.get("old_password") or "").strip()
+    new_password = (body.get("new_password") or "").strip()
+    if not old_password or not new_password:
+        raise HTTPException(400, "当前密码和新密码不能为空")
+    change_password(old_password, new_password)
+    return {"ok": True, "message": "密码已修改，请重新登录"}
+
+
 # ── Repos API ────────────────────────────────────────────
 
 @app.get("/api/repos")
-async def get_repos():
+async def get_repos(_user: Annotated[dict, Depends(get_current_user)]):
     repos = load_repos()
     result = []
     for r in repos:
@@ -64,7 +99,7 @@ async def get_repos():
 
 
 @app.post("/api/repos")
-async def create_repo(body: dict):
+async def create_repo(body: dict, _user: Annotated[dict, Depends(get_current_user)]):
     if not body.get("owner") or not body.get("repo"):
         raise HTTPException(400, "owner 和 repo 不能为空")
     if body.get("platform") not in ("github", "gitee"):
@@ -74,7 +109,7 @@ async def create_repo(body: dict):
 
 
 @app.put("/api/repos/{repo_id}")
-async def modify_repo(repo_id: str, body: dict):
+async def modify_repo(repo_id: str, body: dict, _user: Annotated[dict, Depends(get_current_user)]):
     updated = update_repo(repo_id, body)
     if updated is None:
         raise HTTPException(404, "仓库不存在")
@@ -82,7 +117,7 @@ async def modify_repo(repo_id: str, body: dict):
 
 
 @app.delete("/api/repos/{repo_id}")
-async def remove_repo(repo_id: str):
+async def remove_repo(repo_id: str, _user: Annotated[dict, Depends(get_current_user)]):
     ok = delete_repo(repo_id)
     if not ok:
         raise HTTPException(404, "仓库不存在")
@@ -90,7 +125,7 @@ async def remove_repo(repo_id: str):
 
 
 @app.post("/api/repos/{repo_id}/clear-updates")
-async def clear_repo_updates(repo_id: str):
+async def clear_repo_updates(repo_id: str, _user: Annotated[dict, Depends(get_current_user)]):
     """清空指定仓库的更新次数（update_count=0, updated=False）。"""
     repos = load_repos()
     repo = next((r for r in repos if r.get("id") == repo_id), None)
@@ -111,13 +146,13 @@ async def clear_repo_updates(repo_id: str):
 # ── Config API ───────────────────────────────────────────
 
 @app.get("/api/config")
-async def get_config():
+async def get_config(_user: Annotated[dict, Depends(get_current_user)]):
     cfg = load_config()
     return mask_config(cfg)
 
 
 @app.put("/api/config")
-async def put_config(body: dict):
+async def put_config(body: dict, _user: Annotated[dict, Depends(get_current_user)]):
     interval = body.get("poll_interval_seconds")
     if interval is not None:
         if not isinstance(interval, (int, float)) or interval < 60:
@@ -133,7 +168,7 @@ async def put_config(body: dict):
 # ── Check API ────────────────────────────────────────────
 
 @app.post("/api/check")
-async def trigger_check():
+async def trigger_check(_user: Annotated[dict, Depends(get_current_user)]):
     updated = await run_check_all()
     return {
         "checked": len(load_repos()),
@@ -145,12 +180,12 @@ async def trigger_check():
 # ── State API ────────────────────────────────────────────
 
 @app.get("/api/state")
-async def get_state():
+async def get_state(_user: Annotated[dict, Depends(get_current_user)]):
     return load_state()
 
 
 @app.post("/api/state/clear-all-updates")
-async def clear_all_updates():
+async def clear_all_updates(_user: Annotated[dict, Depends(get_current_user)]):
     """清空所有仓库的更新次数。"""
     repos = load_repos()
     state = load_state()
