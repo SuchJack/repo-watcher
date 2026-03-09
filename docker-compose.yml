@@ -1,0 +1,18 @@
+services:
+  backend:
+    build: ./backend
+    container_name: repo-monitor-backend
+    volumes:
+      - ./data:/app/backend/data
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: repo-monitor-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
