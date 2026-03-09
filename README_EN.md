@@ -42,6 +42,7 @@ The tool monitors **new commits** in selected repos: it polls GitHub/Gitee APIs 
 
 | Feature | Description |
 |---------|-------------|
+| **Login** | Backend requires login; default **admin** / **admin**. Change password after first login under **Settings → Change password**. |
 | **Repo monitoring** | GitHub and Gitee; configure owner/repo/branch; add, edit, remove from list |
 | **Poll interval** | 60–86400 seconds; takes effect immediately after save |
 | **Dashboard** | Latest commit, last check time, update status, and update count per repo |
@@ -65,6 +66,7 @@ The tool monitors **new commits** in selected repos: it polls GitHub/Gitee APIs 
 - **Framework**: FastAPI  
 - **Server**: Uvicorn  
 - **Scheduler**: APScheduler  
+- **Auth**: JWT + bcrypt (single user admin; password configurable or default)  
 - **Storage**: JSON files (config / repos / state); no database  
 
 ---
@@ -92,6 +94,8 @@ docker compose up -d
 
 - **Frontend**: <http://localhost:3000>  
 - **Backend API**: <http://localhost:8000> (optional, for debugging)
+
+You’ll see the login page first. With no admin password configured, use username **admin** and password **admin**; **change the password after first login under Settings → Change password**. To set a custom initial password, use the `ADMIN_PASSWORD` env var or write an `admin_password` bcrypt hash into `backend/data/config.json` .
 
 4. **Logs**
 
@@ -122,13 +126,14 @@ docker compose up -d
 
 **Requirements**: Python 3.10+, Node.js 16+, npm
 
-**Backend** (run from project root, or set `PYTHONPATH` to project root):
+**Backend** (run from project root):
 
 ```bash
-cd backend
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
+
+(If you are already in `backend`, run `cd ..` first.)
 
 **Frontend**:
 
@@ -138,7 +143,7 @@ npm install
 npm run dev
 ```
 
-Frontend dev server runs at <http://localhost:3000>; Vite proxies `/api` to `http://127.0.0.1:8000`.
+Frontend dev server runs at <http://localhost:3000>; Vite proxies `/api` to `http://127.0.0.1:8000`. First visit shows the login page; default credentials are **admin** / **admin**; change the password under **Settings → Change password** after logging in.
 
 ---
 
@@ -148,6 +153,7 @@ Frontend dev server runs at <http://localhost:3000>; Vite proxies `/api` to `htt
 ├── backend/                 # Python backend
 │   ├── main.py               # FastAPI app, routes, static serve
 │   ├── config.py             # Config & storage (config/repos/state)
+│   ├── auth.py               # Login (JWT, default password, change password)
 │   ├── scheduler.py          # Poll scheduler
 │   ├── checker/              # GitHub/Gitee checkers
 │   ├── notifier/             # Feishu, email
@@ -156,7 +162,7 @@ Frontend dev server runs at <http://localhost:3000>; Vite proxies `/api` to `htt
 │   └── Dockerfile
 ├── frontend/                 # Vue frontend
 │   ├── src/
-│   │   ├── views/            # Dashboard, repos, settings
+│   │   ├── views/            # Dashboard, repos, settings, login
 │   │   ├── api/
 │   │   └── router/
 │   ├── nginx.conf            # Nginx: static + /api proxy
@@ -173,21 +179,23 @@ Frontend dev server runs at <http://localhost:3000>; Vite proxies `/api` to `htt
 
 ## 🔧 FAQ
 
-1. **Frontend can’t reach backend / API 404**  
+1. **Default login**  
+   Use **admin** / **admin** when no admin password is configured. Change it after first login under **Settings → Change password**. For a custom password, set the `ADMIN_PASSWORD` env var or add `admin_password` (bcrypt hash) to `backend/data/config.json`.
+
+2. **Frontend can’t reach backend / API 404**  
    Ensure frontend and backend are on the same Docker network and Nginx `proxy_pass` uses the service name `backend:8000`.
 
-2. **Poll interval change doesn’t apply**  
+3. **Poll interval change doesn’t apply**  
    Config save triggers a reschedule. If it still doesn’t, restart the backend container or save config again.
 
-3. **No Feishu/email notifications**  
+4. **No Feishu/email notifications**  
    Check that the channel is enabled and URL/SMTP are correct in Settings. Trigger “Check now” and check backend logs for send errors.
 
-4. **Port 3000 or 8000 in use**  
+5. **Port 3000 or 8000 in use**  
    Change `ports` in `docker-compose.yml` (e.g. `"3080:80"`) and use the new port.
 
 ---
 
 ## 📄 License & reference
 
-- Detailed design and API: **仓库变更监控工具-概要设计.md** (Chinese).  
 - If this project helps you, a Star is appreciated.
