@@ -66,8 +66,8 @@
 1. **克隆项目**
 
 ```bash
-git clone <你的仓库地址>
-cd demo9-监控项目
+git clone https://github.com/SuchJack/repo-watcher
+cd repo-watcher
 ```
 
 2. **启动服务**
@@ -134,7 +134,7 @@ npm install
 npm run dev
 ```
 
-前端开发服务器默认运行在 <http://localhost:3001>，Vite 已将 `/api` 代理到 `http://127.0.0.1:8000`。
+前端开发服务器默认运行在 <http://localhost:3000>，Vite 已将 `/api` 代理到 `http://127.0.0.1:8000`。
 
 ---
 

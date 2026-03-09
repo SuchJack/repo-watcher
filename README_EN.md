@@ -78,8 +78,8 @@ One command starts both frontend and backend; Nginx serves the frontend and prox
 1. **Clone**
 
 ```bash
-git clone <your-repo-url>
-cd demo9-监控项目
+git clone https://github.com/SuchJack/repo-watcher
+cd repo-watcher
 ```
 
 2. **Start**
@@ -138,7 +138,7 @@ npm install
 npm run dev
 ```
 
-Frontend dev server runs at <http://localhost:3001>; Vite proxies `/api` to `http://127.0.0.1:8000`.
+Frontend dev server runs at <http://localhost:3000>; Vite proxies `/api` to `http://127.0.0.1:8000`.
 
 ---
 
