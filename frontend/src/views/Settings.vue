@@ -32,11 +32,23 @@
                 show-password
               />
             </el-form-item>
+            <el-form-item label="GitHub 中转">
+              <el-input
+                v-model="config.github_relay_url"
+                placeholder="可选，Worker 节点地址；留空则直连"
+              />
+            </el-form-item>
             <el-form-item label="Gitee Token">
               <el-input
                 v-model="config.gitee_token"
                 placeholder="可选，提高 API 请求限额"
                 show-password
+              />
+            </el-form-item>
+            <el-form-item label="Gitee 中转">
+              <el-input
+                v-model="config.gitee_relay_url"
+                placeholder="可选，Worker 节点地址；留空则直连"
               />
             </el-form-item>
           </el-form>
@@ -66,6 +78,12 @@
                 v-model="config.feishu_secret"
                 placeholder="留空则不签名"
                 show-password
+              />
+            </el-form-item>
+            <el-form-item label="消息中转">
+              <el-input
+                v-model="config.feishu_relay_url"
+                placeholder="可选，Worker 节点地址；留空则直连"
               />
             </el-form-item>
           </el-form>
@@ -217,9 +235,12 @@ const config = ref({
   scheduler_enabled: true,
   github_token: '',
   gitee_token: '',
+  github_relay_url: '',
+  gitee_relay_url: '',
   feishu_enabled: false,
   feishu_webhook_url: '',
   feishu_secret: '',
+  feishu_relay_url: '',
   email_enabled: false,
   smtp_host: '',
   smtp_port: 465,

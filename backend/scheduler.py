@@ -55,7 +55,11 @@ def _build_message(repo_info: dict, commit: dict) -> tuple[str, str]:
 async def _notify(title: str, text: str, cfg: dict):
     if cfg.get("feishu_enabled") and cfg.get("feishu_webhook_url"):
         await feishu_notifier.send(
-            cfg["feishu_webhook_url"], title, text, cfg.get("feishu_secret", "")
+            cfg["feishu_webhook_url"],
+            title,
+            text,
+            cfg.get("feishu_secret", ""),
+            relay_url=cfg.get("feishu_relay_url", ""),
         )
     if cfg.get("email_enabled") and cfg.get("smtp_host") and cfg.get("to_addrs"):
         mail_notifier.send(
@@ -89,8 +93,19 @@ async def run_check_all() -> list[dict]:
             continue
 
         token = cfg.get("github_token", "") if platform == "github" else cfg.get("gitee_token", "")
+        relay_url = (
+            cfg.get("github_relay_url", "")
+            if platform == "github"
+            else cfg.get("gitee_relay_url", "")
+        )
         fetcher = github_checker if platform == "github" else gitee_checker
-        commit = await fetcher.fetch_latest_commit(owner, repo, branch, token)
+        commit = await fetcher.fetch_latest_commit(
+            owner,
+            repo,
+            branch,
+            token,
+            relay_url=relay_url,
+        )
 
         if commit is None:
             logger.warning("无法获取 %s/%s@%s 的最新提交", owner, repo, branch)

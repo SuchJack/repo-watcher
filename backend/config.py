@@ -17,7 +17,16 @@ STATE_FILE = DATA_DIR / "state.json"
 
 _lock = threading.Lock()
 
-SENSITIVE_FIELDS = {"smtp_password", "feishu_secret", "github_token", "gitee_token", "admin_password"}
+SENSITIVE_FIELDS = {
+    "smtp_password",
+    "feishu_secret",
+    "github_token",
+    "gitee_token",
+    "github_relay_url",
+    "gitee_relay_url",
+    "feishu_relay_url",
+    "admin_password",
+}
 MASK = "******"
 
 DEFAULT_CONFIG = {
@@ -25,9 +34,12 @@ DEFAULT_CONFIG = {
     "scheduler_enabled": True,
     "github_token": "",
     "gitee_token": "",
+    "github_relay_url": "",
+    "gitee_relay_url": "",
     "feishu_enabled": False,
     "feishu_webhook_url": "",
     "feishu_secret": "",
+    "feishu_relay_url": "",
     "email_enabled": False,
     "smtp_host": "",
     "smtp_port": 465,
