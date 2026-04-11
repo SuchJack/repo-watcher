@@ -17,15 +17,20 @@ STATE_FILE = DATA_DIR / "state.json"
 
 _lock = threading.Lock()
 
-SENSITIVE_FIELDS = {
+MASKED_RESPONSE_FIELDS = {
     "smtp_password",
     "feishu_secret",
     "github_token",
     "gitee_token",
+    "admin_password",
+}
+
+# Relay URLs should stay visible in the settings page, but we still accept the
+# legacy mask value on save so an already-open page will not overwrite them.
+MASK_PRESERVE_FIELDS = MASKED_RESPONSE_FIELDS | {
     "github_relay_url",
     "gitee_relay_url",
     "feishu_relay_url",
-    "admin_password",
 }
 MASK = "******"
 
@@ -83,7 +88,7 @@ def save_config(new_cfg: dict):
         old = _read_json(CONFIG_FILE, DEFAULT_CONFIG)
         merged = {**DEFAULT_CONFIG, **old}
         for key, val in new_cfg.items():
-            if key in SENSITIVE_FIELDS and val == MASK:
+            if key in MASK_PRESERVE_FIELDS and val == MASK:
                 continue
             merged[key] = val
         _write_json(CONFIG_FILE, merged)
@@ -93,7 +98,7 @@ def save_config(new_cfg: dict):
 def mask_config(cfg: dict) -> dict:
     """返回脱敏后的配置（用于 API 响应）"""
     out = deepcopy(cfg)
-    for field in SENSITIVE_FIELDS:
+    for field in MASKED_RESPONSE_FIELDS:
         if out.get(field):
             out[field] = MASK
     return out
