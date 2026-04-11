@@ -1,6 +1,6 @@
 services:
   backend:
-    build: ./backend
+    image: crpi-wmv8qzk3077tt3cn.cn-hangzhou.personal.cr.aliyuncs.com/suchjack/repo-monitor-backend:1.0
     container_name: repo-monitor-backend
     volumes:
       - ./data:/app/backend/data
@@ -9,7 +9,7 @@ services:
       - "8000:8000"
 
   frontend:
-    build: ./frontend
+    image: crpi-wmv8qzk3077tt3cn.cn-hangzhou.personal.cr.aliyuncs.com/suchjack/repo-monitor-frontend:1.0
     container_name: repo-monitor-frontend
     ports:
       - "3000:80"
